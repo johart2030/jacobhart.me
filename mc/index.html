@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>jacobhart Server (formerly NotOgSMP)</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background:
+        linear-gradient(rgba(11, 15, 20, .88), rgba(11, 15, 20, .96)),
+        radial-gradient(circle at top, #26313d, #0b0f14 65%);
+    color: #f5f7fa;
+    min-height: 100vh;
+
+    opacity: 0;
+    transform: translateY(12px);
+    animation: pageOpen .65s ease-out forwards;
+}
+
+@keyframes pageOpen {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.container {
+    width: min(1050px, calc(100% - 32px));
+    margin: auto;
+    padding: 55px 0;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 45px;
+}
+
+.logo {
+    font-size: 54px;
+    margin-bottom: 10px;
+    font-weight: 900;
+    letter-spacing: -2px;
+    text-shadow: 0 4px 15px rgba(0,0,0,.5);
+}
+
+.subtitle {
+    color: #8e9aa8;
+    font-size: 18px;
+}
+
+.status-banner {
+    background: rgba(18, 24, 32, .92);
+    border: 1px solid #26313d;
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.status-dot {
+    width: 11px;
+    height: 11px;
+    background: #2ed573;
+    border-radius: 50%;
+    box-shadow: 0 0 12px #2ed573;
+}
+
+.status-banner span {
+    color: #f5f7fa;
+    font-weight: bold;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+}
+
+.card {
+    background: rgba(18, 24, 32, .92);
+    border: 1px solid #26313d;
+    border-radius: 18px;
+    padding: 28px;
+    transition: transform .2s, border-color .2s;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    border-color: #3a4755;
+}
+
+.icon {
+    font-size: 38px;
+    margin-bottom: 15px;
+}
+
+.card h2 {
+    margin: 0 0 9px;
+    font-size: 23px;
+}
+
+.card p {
+    color: #8e9aa8;
+    line-height: 1.5;
+    min-height: 45px;
+}
+
+.address {
+    background: #0b1016;
+    border: 1px solid #26313d;
+    border-radius: 9px;
+    padding: 11px;
+    margin: 18px 0;
+    font-family: monospace;
+    color: #aeb8c4;
+    word-break: break-all;
+}
+
+.button {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    background: #0b1016;
+    color: #f5f7fa;
+    border: 1px solid #26313d;
+    padding: 12px;
+    border-radius: 9px;
+    font-weight: bold;
+    transition: background .2s, border-color .2s, transform .2s;
+}
+
+.button:hover {
+    background: #151d26;
+    border-color: #3a4755;
+    transform: translateY(-1px);
+}
+
+.secondary {
+    background: #0b1016;
+}
+
+.secondary:hover {
+    background: #151d26;
+}
+
+footer {
+    text-align: center;
+    margin-top: 45px;
+    color: #4f5965;
+    font-size: 14px;
+}
+
+@media (max-width: 500px) {
+    .logo {
+        font-size: 40px;
+    }
+
+    .container {
+        padding-top: 35px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body {
+        opacity: 1;
+        transform: none;
+        animation: none;
+    }
+
+    .button {
+        transition: none;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    <div class="logo">Jacob Hart Minecraft</div>
+    <div class="subtitle">A Minecraft server for Java & Bedrock</div>
+</header>
+
+<div class="status-banner">
+    <div class="status-dot"></div>
+    <span>Server Status</span>
+    <span style="color:#aeb8c4;">Check the live status</span>
+</div>
+
+<div class="cards">
+
+    <div class="card">
+        <div class="icon">🖥️</div>
+        <h2>Java Edition</h2>
+        <p>Join from Minecraft Java Edition on PC.</p>
+
+        <div class="address">
+            java.jacobhart.me
+        </div>
+
+        <a class="button" href="#">
+            Copy Server Address
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="icon">📱</div>
+        <h2>Bedrock Edition</h2>
+        <p>Join from Bedrock Edition on phones, consoles, Windows, and more.</p>
+
+        <div class="address">
+            bedrock.jacobhart.me
+        </div>
+
+        <a class="button" href="#">
+            View Connection Info
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="icon">🗺️</div>
+        <h2>Live Map</h2>
+        <p>Explore the Minecraft world using the live Dynmap.</p>
+
+        <div class="address">
+            map.jacobhart.me
+        </div>
+
+        <a class="button" href="https://map.jacobhart.me">
+            Open Live Map
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="icon">📊</div>
+        <h2>Server Status</h2>
+        <p>Check whether the Minecraft servers and services are online.</p>
+
+        <div class="address">
+            status.jacobhart.me
+        </div>
+
+        <a class="button secondary" href="/status/">
+            View Status
+        </a>
+    </div>
+
+</div>
+
+<footer>
+    Jacob Hart Minecraft · jacobhart.me
+</footer>
+
+</div>
+
+<script>
+document.querySelectorAll(".button").forEach(button => {
+    if (button.textContent.includes("Copy")) {
+        button.addEventListener("click", async event => {
+            event.preventDefault();
+
+            try {
+                await navigator.clipboard.writeText("java.jacobhart.me");
+                button.textContent = "Copied!";
+                setTimeout(() => {
+                    button.textContent = "Copy Server Address";
+                }, 1500);
+            } catch {
+                button.textContent = "java.jacobhart.me";
+            }
+        });
+    }
+});
+</script>
+
+</body>
+</html>

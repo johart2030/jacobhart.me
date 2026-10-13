@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Server Status</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #0b0f14;
+    color: #f5f7fa;
+}
+
+.container {
+    width: min(1100px, calc(100% - 30px));
+    margin: auto;
+    padding: 45px 0;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+h1 {
+    margin: 0 0 8px;
+    font-size: 38px;
+}
+
+.subtitle {
+    color: #8e9aa8;
+}
+
+.overall {
+    padding: 18px 22px;
+    border-radius: 14px;
+    background: #121820;
+    border: 1px solid #26313d;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.overall-dot {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: #777;
+}
+
+.overall-text {
+    font-weight: bold;
+}
+
+.services {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+}
+
+.service {
+    background: #121820;
+    border: 1px solid #26313d;
+    border-radius: 16px;
+    padding: 23px;
+}
+
+.service-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.service-name {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.online {
+    background: #2ed573;
+    box-shadow: 0 0 10px #2ed573;
+}
+
+.offline {
+    background: #ff4757;
+    box-shadow: 0 0 10px #ff4757;
+}
+
+.checking {
+    background: #ffa502;
+    box-shadow: 0 0 10px #ffa502;
+}
+
+.details {
+    margin-top: 22px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.detail {
+    background: #0b1016;
+    border-radius: 9px;
+    padding: 12px;
+}
+
+.label {
+    color: #74808e;
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.value {
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.address {
+    margin-top: 15px;
+    padding: 11px;
+    border-radius: 8px;
+    background: #0b1016;
+    color: #aeb8c4;
+    font-family: monospace;
+    font-size: 13px;
+    word-break: break-all;
+    text-decoration: none;
+    display: block;
+}
+
+a.address:hover,
+button.copy-address:hover {
+    color: #ffffff;
+    outline: 1px solid #26313d;
+}
+
+button.copy-address {
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    border: 0;
+}
+
+.copy-hint {
+    float: right;
+    color: #74808e;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+}
+
+.address-port {
+    margin-top: 7px;
+    padding-left: 3px;
+    color: #8e9aa8;
+    font-size: 12px;
+}
+
+.address-port strong {
+    color: #f5f7fa;
+    font-family: monospace;
+}
+
+.last-check {
+    text-align: center;
+    margin-top: 30px;
+    color: #697583;
+    font-size: 13px;
+}
+
+footer {
+    text-align: center;
+    margin-top: 35px;
+    color: #4f5965;
+    font-size: 13px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    <h1>Server Status</h1>
+    <div class="subtitle">Jacob Hart Minecraft Services</div>
+</header>
+
+<div class="overall">
+    <div id="overallDot" class="overall-dot"></div>
+    <div id="overallText">Checking services...</div>
+</div>
+
+<div class="services">
+
+    <!-- Minecraft Java -->
+    <div class="service">
+        <div class="service-header">
+            <div class="service-name">Minecraft Java</div>
+
+            <div class="status">
+                <div id="javaDot" class="dot checking"></div>
+                <span id="javaStatus">Checking</span>
+            </div>
+        </div>
+
+        <div class="details">
+            <div class="detail">
+                <div class="label">Players</div>
+                <div id="javaPlayers" class="value">—</div>
+            </div>
+
+            <div class="detail">
+                <div class="label">Version</div>
+                <div id="javaVersion" class="value">—</div>
+            </div>
+
+            <div class="detail">
+                <div class="label">Ping</div>
+                <div id="javaPing" class="value">—</div>
+            </div>
+
+            <div class="detail">
+                <div class="label">Status</div>
+                <div id="javaOnline" class="value">Checking...</div>
+            </div>
+        </div>
+
+        <button class="address copy-address" type="button"
+                data-copy="java.jacobhart.me">
+            java.jacobhart.me <span class="copy-hint">Click to copy</span>
+        </button>
+    </div>
+
+
+    <!-- Minecraft Bedrock -->
+    <div class="service">
+        <div class="service-header">
+            <div class="service-name">Minecraft Bedrock</div>
+
+            <div class="status">
+                <div id="bedrockDot" class="dot checking"></div>
+                <span id="bedrockStatus">Checking</span>
+            </div>
+        </div>
+
+        <div class="details">
+            <div class="detail">
+                <div class="label">Players</div>
+                <div id="bedrockPlayers" class="value">—</div>
+            </div>
+
+            <div class="detail">
+                <div class="label">Version</div>
+                <div id="bedrockVersion" class="value">—</div>
+            </div>
+
+            <div class="detail">
+                <div class="label">Ping</div>
+                <div id="bedrockPing" class="value">—</div>
+            </div>
+
+            <div class="detail">
+                <div class="label">Status</div>
+                <div id="bedrockOnline" class="value">Checking...</div>
+            </div>
+        </div>
+
+        <button class="address copy-address" type="button"
+                data-copy="bedrock.jacobhart.me">
+            bedrock.jacobhart.me <span class="copy-hint">Click to copy</span>
+        </button>
+        <div class="address-port">Port: <strong>20338</strong></div>
+    </div>
+
+
+    <!-- Dynmap -->
+    <div class="service">
+        <div class="service-header">
+            <div class="service-name">Dynmap</div>
+
+            <div class="status">
+                <div id="mapDot" class="dot checking"></div>
+                <span id="mapStatus">Checking</span>
+            </div>
+        </div>
+
+        <div class="details">
+            <div class="detail">
+                <div class="label">Service</div>
+                <div id="mapService" class="value">Checking...</div>
+            </div>
+
+            <div class="detail">
+                <div class="label">Response</div>
+                <div id="mapPing" class="value">—</div>
+            </div>
+        </div>
+
+        <a class="address" href="https://map.jacobhart.me">
+            map.jacobhart.me
+        </a>
+    </div>
+
+
+    <!-- Main Website -->
+    <div class="service">
+        <div class="service-header">
+            <div class="service-name">Main Website</div>
+
+            <div class="status">
+                <div id="mainDot" class="dot checking"></div>
+                <span id="mainStatus">Checking</span>
+            </div>
+        </div>
+
+        <div class="details">
+            <div class="detail">
+                <div class="label">Response</div>
+                <div id="mainPing" class="value">—</div>
+            </div>
+
+            <div class="detail">
+                <div class="label">HTTP status</div>
+                <div id="mainHttp" class="value">—</div>
+            </div>
+        </div>
+
+        <a class="address" href="https://jacobhart.me">
+            jacobhart.me
+        </a>
+    </div>
+
+
+    <!-- Minecraft Website -->
+    <div class="service">
+        <div class="service-header">
+            <div class="service-name">Minecraft Website</div>
+
+            <div class="status">
+                <div id="mcDot" class="dot checking"></div>
+                <span id="mcStatus">Checking</span>
+            </div>
+        </div>
+
+        <div class="details">
+            <div class="detail">
+                <div class="label">Response</div>
+                <div id="mcPing" class="value">—</div>
+            </div>
+
+            <div class="detail">
+                <div class="label">HTTP status</div>
+                <div id="mcHttp" class="value">—</div>
+            </div>
+        </div>
+
+        <a class="address" href="https://mc.jacobhart.me">
+            mc.jacobhart.me
+        </a>
+    </div>
+
+
+    <!-- Status Website -->
+    <div class="service">
+        <div class="service-header">
+            <div class="service-name">Status Website</div>
+
+            <div class="status">
+                <div id="statusDot" class="dot checking"></div>
+                <span id="statusStatus">Checking</span>
+            </div>
+        </div>
+
+        <div class="details">
+            <div class="detail">
+                <div class="label">Response</div>
+                <div id="statusPing" class="value">—</div>
+            </div>
+
+            <div class="detail">
+                <div class="label">HTTP status</div>
+                <div id="statusHttp" class="value">—</div>
+            </div>
+        </div>
+
+        <a class="address" href="https://status.jacobhart.me">
+            status.jacobhart.me
+        </a>
+    </div>
+
+</div>
+
+<div class="last-check">
+    Last checked: <span id="lastCheck">—</span>
+</div>
+
+<footer>
+    Status automatically refreshes every 30 seconds
+</footer>
+
+</div>
+
+<script>
+async function refreshStatus() {
+
+    try {
+
+        const response = await fetch(
+            "/api/status",
+            {
+                cache: "no-store"
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error("API returned HTTP " + response.status);
+        }
+
+        const data = await response.json();
+
+        updateMinecraft("java", data.java);
+        updateMinecraft("bedrock", data.bedrock);
+        updateDynmap(data.dynmap);
+
+        updateWebsite("main", data.main_site);
+        updateWebsite("mc", data.minecraft_site);
+        updateWebsite("status", data.status_page);
+
+        const allGood =
+            data.java.online &&
+            data.bedrock.online &&
+            (!data.dynmap.configured || data.dynmap.online) &&
+            data.main_site.online &&
+            data.minecraft_site.online &&
+            data.status_page.online;
+
+        const dot = document.getElementById("overallDot");
+        const text = document.getElementById("overallText");
+
+        if (allGood) {
+
+            dot.style.background = "#2ed573";
+            dot.style.boxShadow = "0 0 12px #2ed573";
+            text.textContent = "All systems operational";
+
+        } else {
+
+            dot.style.background = "#ff4757";
+            dot.style.boxShadow = "0 0 12px #ff4757";
+            text.textContent = "One or more systems are offline";
+        }
+
+        document.getElementById("lastCheck").textContent =
+            new Date().toLocaleTimeString();
+
+    } catch (error) {
+
+        console.error(error);
+
+        const dot = document.getElementById("overallDot");
+        dot.style.background = "#ff4757";
+        dot.style.boxShadow = "0 0 12px #ff4757";
+
+        document.getElementById("overallText").textContent =
+            "Status check failed";
+    }
+}
+
+
+function updateMinecraft(name, data) {
+
+    const dot = document.getElementById(name + "Dot");
+    const status = document.getElementById(name + "Status");
+
+    dot.className = "dot";
+
+    if (data && data.online) {
+
+        dot.classList.add("online");
+        status.textContent = "Online";
+
+    } else {
+
+        dot.classList.add("offline");
+        status.textContent = "Offline";
+    }
+
+    document.getElementById(name + "Players").textContent =
+        data && data.players !== undefined
+            ? `${data.players} / ${data.max_players}`
+            : "—";
+
+    document.getElementById(name + "Version").textContent =
+        data && data.version
+            ? data.version
+            : "—";
+
+    document.getElementById(name + "Ping").textContent =
+        data && data.ping !== null && data.ping !== undefined
+            ? data.ping + " ms"
+            : "—";
+
+    document.getElementById(name + "Online").textContent =
+        data && data.online
+            ? "Online"
+            : "Offline";
+}
+
+
+function updateDynmap(data) {
+
+    const dot = document.getElementById("mapDot");
+    const status = document.getElementById("mapStatus");
+
+    dot.className = "dot";
+
+    if (!data || !data.configured) {
+
+        dot.classList.add("checking");
+        status.textContent = "Not configured";
+
+        document.getElementById("mapService").textContent =
+            "Not configured";
+
+        document.getElementById("mapPing").textContent =
+            "—";
+
+        return;
+    }
+
+    if (data.online) {
+
+        dot.classList.add("online");
+        status.textContent = "Online";
+
+        document.getElementById("mapService").textContent =
+            "Online";
+
+        document.getElementById("mapPing").textContent =
+            data.ping + " ms";
+
+    } else {
+
+        dot.classList.add("offline");
+        status.textContent = "Offline";
+
+        document.getElementById("mapService").textContent =
+            "Offline";
+
+        document.getElementById("mapPing").textContent =
+            "—";
+    }
+}
+
+
+function updateWebsite(name, data) {
+
+    const dot = document.getElementById(name + "Dot");
+    const status = document.getElementById(name + "Status");
+
+    if (!data) {
+        dot.className = "dot checking";
+        status.textContent = "Checking";
+        return;
+    }
+
+    dot.className = "dot";
+
+    if (data.online) {
+        dot.classList.add("online");
+        status.textContent = "Online";
+    } else {
+        dot.classList.add("offline");
+        status.textContent = "Offline";
+    }
+
+    document.getElementById(name + "Ping").textContent =
+        data.ping !== null && data.ping !== undefined
+            ? data.ping + " ms"
+            : "—";
+
+    document.getElementById(name + "Http").textContent =
+        data.http_status !== null && data.http_status !== undefined
+            ? "HTTP " + data.http_status
+            : "Unavailable";
+}
+
+
+document.querySelectorAll(".copy-address").forEach(button => {
+    button.addEventListener("click", async () => {
+        const hint = button.querySelector(".copy-hint");
+
+        try {
+            await navigator.clipboard.writeText(button.dataset.copy);
+            hint.textContent = "Copied!";
+        } catch (error) {
+            hint.textContent = "Copy failed";
+            console.error("Clipboard copy failed:", error);
+        }
+
+        setTimeout(() => {
+            hint.textContent = "Click to copy";
+        }, 1800);
+    });
+});
+
+refreshStatus();
+
+setInterval(
+    refreshStatus,
+    30000
+);
+</script>
+
+</body>
+</html>
