@@ -1,0 +1,4 @@
+name = "jacobhart-status-api"
+main = "src/entry.py"
+compatibility_date = "2026-10-13"
+compatibility_flags = ["python_workers"]
