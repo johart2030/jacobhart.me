@@ -1,4 +1,5 @@
 import asyncio
+import json
 import time
 
 from js import Object, fetch
@@ -75,36 +76,43 @@ async def check_minecraft(api_url):
             fetch_options("application/json"),
         )
 
+        if not response.ok:
+            status = int(response.status)
+            body = await response.text()
+
+            raise RuntimeError(
+                f"Status API returned HTTP {status}: "
+                f"{body[:200]}"
+            )
+
+        # Read the response as text and parse it into a
+        # regular Python dictionary.
+        body = await response.text()
+        data = json.loads(body)
+
+        if not isinstance(data, dict):
+            raise ValueError(
+                "Status API returned unexpected JSON"
+            )
+
+        players = data.get("players") or {}
+
+        if not isinstance(players, dict):
+            players = {}
+
+        version = data.get("version") or "Unknown"
+
+        if isinstance(version, dict):
+            version = version.get("name") or "Unknown"
+
         elapsed = round(
             (time.perf_counter() - start) * 1000
         )
 
-        if not response.ok:
-            raise RuntimeError(
-                f"Status API returned HTTP {response.status}"
-            )
-
-        data = await response.json()
-
-        data = {
-            "online": bool(data.online),
-            "players": {
-                "online": int(data.players.online),
-                "max": int(data.players.max),
-            },
-            "version": str(data.version),
-        }
-
-        players = data.get("players") or {}
-        version = data.get("version") or "Unknown"
-
-        if isinstance(version, dict):
-            version = version.get("name", "Unknown")
-
         return {
             "online": bool(data.get("online", False)),
-            "players": players.get("online", 0),
-            "max_players": players.get("max", 0),
+            "players": int(players.get("online") or 0),
+            "max_players": int(players.get("max") or 0),
             "version": str(version),
             "ping": None,
             "api_response_ms": elapsed,
@@ -136,7 +144,6 @@ def add_headers(response):
 class Default(WorkerEntrypoint):
 
     async def fetch(self, request):
-
         if request.method == "OPTIONS":
             return add_headers(Response(""))
 
