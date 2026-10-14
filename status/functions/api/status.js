@@ -1,43 +1,100 @@
+const CACHE_TTL_SECONDS = 15;
+const MAX_BODY_BYTES = 32 * 1024;
 
-export async function onRequestGet({ env }) {
+function errorResponse(status, message, extraHeaders = {}) {
+  return new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff",
+      "X-Robots-Tag": "noindex, nofollow",
+      ...extraHeaders,
+    },
+  });
+}
+
+export async function onRequest(context) {
+  const { request, env } = context;
+  const url = new URL(request.url);
+
+  // This route is intentionally GET-only and does not accept query parameters.
+  if (request.method !== "GET") {
+    return errorResponse(405, "Method not allowed", { Allow: "GET" });
+  }
+  if (url.pathname !== "/api/status" || url.search) {
+    return errorResponse(404, "Not found");
+  }
+  if (!env.STATUS_API) {
+    return errorResponse(503, "Status service temporarily unavailable");
+  }
+
+  const cache = caches.default;
+  // A fixed key prevents query parameters from creating unlimited cache entries.
+  const cacheKey = new Request(`${url.origin}/api/status`, { method: "GET" });
+
   try {
+    const cached = await cache.match(cacheKey);
+    if (cached) return cached;
+  } catch {
+    // If cache lookup fails, try the backend rather than failing the dashboard.
+  }
+
+  try {
+    // This request goes through the Pages Service Binding, not a public URL.
     const internalRequest = new Request(
       "https://status-api.internal/api/status",
       {
         method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(8_000),
       }
     );
 
     const upstream = await env.STATUS_API.fetch(internalRequest);
+    if (!upstream.ok) {
+      return errorResponse(502, "Status service temporarily unavailable");
+    }
 
-    // Return only the intended status response.
-    const headers = new Headers(upstream.headers);
+    const contentType = (upstream.headers.get("content-type") || "").toLowerCase();
+    if (!contentType.includes("application/json")) {
+      return errorResponse(502, "Status service returned an invalid response");
+    }
 
-    // This endpoint is now same-origin with the status page.
-    headers.delete("Access-Control-Allow-Origin");
-    headers.delete("Access-Control-Allow-Methods");
-    headers.delete("Access-Control-Allow-Headers");
+    const declaredLength = Number(upstream.headers.get("content-length") || 0);
+    if (declaredLength > MAX_BODY_BYTES) {
+      return errorResponse(502, "Status service returned an invalid response");
+    }
 
-    return new Response(upstream.body, {
-      status: upstream.status,
-      headers,
+    const body = await upstream.text();
+    if (new TextEncoder().encode(body).byteLength > MAX_BODY_BYTES) {
+      return errorResponse(502, "Status service returned an invalid response");
+    }
+    try {
+      JSON.parse(body);
+    } catch {
+      return errorResponse(502, "Status service returned an invalid response");
+    }
+
+    const response = new Response(body, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        // The browser revalidates; Cloudflare's Cache API keeps a copy for 15 seconds.
+        "Cache-Control": `public, max-age=0, s-maxage=${CACHE_TTL_SECONDS}`,
+        "X-Content-Type-Options": "nosniff",
+        "X-Robots-Tag": "noindex, nofollow",
+      },
     });
+
+    try {
+      context.waitUntil(cache.put(cacheKey, response.clone()).catch(() => {}));
+    } catch {
+      // Cache storage is an optimization; a successful status response can still be returned.
+    }
+
+    return response;
   } catch {
-    // Do not expose internal exception details to visitors.
-    return new Response(
-      JSON.stringify({
-        error: "Status service temporarily unavailable",
-      }),
-      {
-        status: 502,
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-          "Cache-Control": "no-store",
-        },
-      }
-    );
+    return errorResponse(502, "Status service temporarily unavailable");
   }
 }
