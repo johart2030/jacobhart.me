@@ -4,5 +4,8 @@ compatibility_date = "2026-10-13"
 compatibility_flags = ["python_workers"]
 
 [observability.logs]
-enabled = false
+enabled = true
 invocation_logs = true
+
+[observability.traces]
+enabled = false
