@@ -116,16 +116,10 @@ async def check_minecraft(api_url):
 
 
 def add_headers(response):
-    response.headers.set(
-        "Access-Control-Allow-Origin", "*"
-    )
-    response.headers.set(
-        "Access-Control-Allow-Methods", "GET, OPTIONS"
-    )
-    response.headers.set(
-        "Access-Control-Allow-Headers", "Content-Type"
-    )
-    response.headers.set("Cache-Control", "no-store")
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    response.headers["Cache-Control"] = "no-store"
 
     return response
 
