@@ -2,7 +2,7 @@ import asyncio
 import time
 
 from js import Object, fetch
-from pyodide.ffi import to_js
+from pyodide.ffi import to_js, to_py
 from workers import WorkerEntrypoint, Response
 
 
@@ -84,7 +84,7 @@ async def check_minecraft(api_url):
                 f"Status API returned HTTP {response.status}"
             )
 
-        data = await response.json()
+        data = to_py(await response.json())
 
         players = data.get("players") or {}
         version = data.get("version") or "Unknown"
