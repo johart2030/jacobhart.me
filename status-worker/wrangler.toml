@@ -9,3 +9,9 @@ invocation_logs = true
 
 [observability.traces]
 enabled = false
+
+[[unsafe.bindings]]
+name = "STATUS_API"
+type = "service"
+service = "jacobhart-me-status"
+environment = "production"
