@@ -2,10 +2,9 @@ import asyncio
 import json
 import time
 
-from js import Object, fetch
+from js import AbortSignal, Object, fetch
 from pyodide.ffi import to_js
 from workers import WorkerEntrypoint, Response
-from urllib.parse import urlparse
 
 
 PUBLIC_MAIN_SITE = "https://jacobhart.me/"
@@ -13,18 +12,15 @@ PUBLIC_MC_SITE = "https://mc.jacobhart.me/"
 PUBLIC_STATUS_SITE = "https://status.jacobhart.me/"
 PUBLIC_DYNMAP = "https://map.jacobhart.me/"
 
-JAVA_API = (
-    "https://api.mcsrvstat.us/3/"
-    "stamina-xf.tun.ply.gg:1904"
-)
+JAVA_API = "https://api.mcsrvstat.us/3/stamina-xf.tun.ply.gg:1904"
+BEDROCK_API = "https://api.mcsrvstat.us/bedrock/3/147.185.221.213:20338"
 
-BEDROCK_API = (
-    "https://api.mcsrvstat.us/bedrock/3/"
-    "147.185.221.213:20338"
-)
+REQUEST_TIMEOUT_MS = 5000
 
 
 def fetch_options(accept="*/*"):
+    # AbortSignal.timeout is supported by the Workers runtime and prevents a
+    # slow upstream from holding this status request open indefinitely.
     return to_js(
         {
             "headers": {
@@ -32,6 +28,7 @@ def fetch_options(accept="*/*"):
                 "Accept": accept,
             },
             "redirect": "follow",
+            "signal": AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         },
         dict_converter=Object.fromEntries,
     )
@@ -39,28 +36,16 @@ def fetch_options(accept="*/*"):
 
 async def check_website(url):
     start = time.perf_counter()
-
     try:
-        response = await fetch(
-            url,
-            fetch_options("text/html,*/*"),
-        )
-
-        elapsed = round(
-            (time.perf_counter() - start) * 1000
-        )
-
+        response = await fetch(url, fetch_options("text/html,*/*"))
+        elapsed = round((time.perf_counter() - start) * 1000)
         return {
             "online": 200 <= response.status < 400,
             "ping": elapsed,
             "http_status": int(response.status),
         }
-
-    except Exception as error:
-        elapsed = round(
-            (time.perf_counter() - start) * 1000
-        )
-
+    except Exception:
+        elapsed = round((time.perf_counter() - start) * 1000)
         return {
             "online": False,
             "ping": elapsed,
@@ -70,62 +55,55 @@ async def check_website(url):
 
 async def check_minecraft(api_url):
     start = time.perf_counter()
-
     try:
-        response = await fetch(
-            api_url,
-            fetch_options("application/json"),
-        )
-
+        response = await fetch(api_url, fetch_options("application/json"))
         if not response.ok:
-            status = int(response.status)
-            body = await response.text()
-
+            # Do not expose upstream response bodies to public API callers.
             raise RuntimeError("Minecraft status provider returned an error")
 
-        # Read the response as text and parse it into a
-        # regular Python dictionary.
         body = await response.text()
         data = json.loads(body)
-
         if not isinstance(data, dict):
-            raise ValueError(
-                "Status API returned unexpected JSON"
-            )
+            raise ValueError("Invalid provider response")
+
+        online = data.get("online")
+        if not isinstance(online, bool):
+            raise ValueError("Invalid provider response")
 
         players = data.get("players") or {}
-
         if not isinstance(players, dict):
-            players = {}
+            raise ValueError("Invalid provider response")
+
+        def nonnegative_int(value, default=0):
+            # Reject strings, booleans, negative values, and unreasonable counts.
+            if isinstance(value, bool) or not isinstance(value, int):
+                return default
+            if value < 0 or value > 1_000_000:
+                return default
+            return value
 
         version = data.get("version") or "Unknown"
-
         if isinstance(version, dict):
             version = version.get("name") or "Unknown"
-
-        elapsed = round(
-            (time.perf_counter() - start) * 1000
-        )
+        if not isinstance(version, str):
+            version = "Unknown"
 
         return {
-            "online": bool(data.get("online", False)),
-            "players": int(players.get("online") or 0),
-            "max_players": int(players.get("max") or 0),
-            "version": str(version),
+            "online": online,
+            "players": nonnegative_int(players.get("online")),
+            "max_players": nonnegative_int(players.get("max")),
+            "version": version[:100],
             "ping": None,
-            "api_response_ms": elapsed,
+            "api_response_ms": round((time.perf_counter() - start) * 1000),
         }
-
-    except Exception as error:
+    except Exception:
         return {
             "online": False,
             "players": 0,
             "max_players": 0,
             "version": "Unknown",
             "ping": None,
-            "api_response_ms": round(
-                (time.perf_counter() - start) * 1000
-            ),
+            "api_response_ms": round((time.perf_counter() - start) * 1000),
             "error": "Minecraft status check failed",
         }
 
@@ -133,34 +111,34 @@ async def check_minecraft(api_url):
 def add_headers(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    response.headers["Access-Control-Allow-Headers"] = "Accept, Content-Type"
+    response.headers["Access-Control-Max-Age"] = "86400"
     response.headers["Cache-Control"] = "no-store"
-
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000"
     return response
 
 
 class Default(WorkerEntrypoint):
-
     async def fetch(self, request):
-        # Handle browser preflight requests separately.
-        if request.method == "OPTIONS":
-            response = Response("")
-            response.status = 204
-            return add_headers(response)
-
-        # This endpoint is read-only and serves one route.
-        if request.method != "GET":
-            response = Response.json(
-                {"error": "Method not allowed"}
-            )
-            response.status = 405
-            response.headers["Allow"] = "GET, OPTIONS"
-            return add_headers(response)
+        from urllib.parse import urlparse
 
         path = urlparse(request.url).path
         if path != "/api/status":
             response = Response.json({"error": "Not found"})
             response.status = 404
+            return add_headers(response)
+
+        if request.method == "OPTIONS":
+            response = Response("")
+            response.status = 204
+            return add_headers(response)
+
+        if request.method != "GET":
+            response = Response.json({"error": "Method not allowed"})
+            response.status = 405
+            response.headers["Allow"] = "GET, OPTIONS"
             return add_headers(response)
 
         (
@@ -180,7 +158,6 @@ class Default(WorkerEntrypoint):
         )
 
         dynmap["configured"] = True
-
         result = {
             "java": java,
             "bedrock": bedrock,
@@ -190,5 +167,4 @@ class Default(WorkerEntrypoint):
             "status_page": status_page,
             "checked": int(time.time()),
         }
-
         return add_headers(Response.json(result))
