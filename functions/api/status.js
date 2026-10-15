@@ -11,6 +11,50 @@ const CORS_HEADERS = {
   "Access-Control-Max-Age": "86400",
 };
 
+
+function isPlainObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function validCheck(value) {
+  if (!isPlainObject(value) || typeof value.online !== "boolean") return false;
+  if (value.ping !== undefined && value.ping !== null &&
+      (!Number.isFinite(value.ping) || value.ping < 0 || value.ping > 120000)) return false;
+  if (value.http_status !== undefined &&
+      (!Number.isInteger(value.http_status) || value.http_status < 100 || value.http_status > 599)) return false;
+  if (value.players !== undefined &&
+      (!Number.isInteger(value.players) || value.players < 0 || value.players > 10000000)) return false;
+  if (value.max_players !== undefined &&
+      (!Number.isInteger(value.max_players) || value.max_players < 0 || value.max_players > 10000000)) return false;
+  for (const key of ["version", "motd", "error", "provider"]) {
+    if (value[key] !== undefined && value[key] !== null &&
+        (typeof value[key] !== "string" || value[key].length > 500)) return false;
+  }
+  return true;
+}
+
+function validStatusPayload(payload) {
+  if (!isPlainObject(payload)) return false;
+  const required = ["java", "bedrock", "dynmap", "main_site", "minecraft_site", "status_page", "checked"];
+  if (!required.every((key) => Object.prototype.hasOwnProperty.call(payload, key))) return false;
+  if (!validCheck(payload.java) || !validCheck(payload.bedrock) ||
+      !validCheck(payload.dynmap) || !validCheck(payload.main_site) ||
+      !validCheck(payload.minecraft_site) || !validCheck(payload.status_page)) return false;
+  if (!Number.isSafeInteger(payload.checked) || payload.checked < 0) return false;
+  if (payload.dynmap.configured !== undefined && typeof payload.dynmap.configured !== "boolean") return false;
+  if (payload.bedrock.provider_checks !== undefined) {
+    if (!Array.isArray(payload.bedrock.provider_checks) || payload.bedrock.provider_checks.length > 4) return false;
+    if (!payload.bedrock.provider_checks.every((item) =>
+      isPlainObject(item) &&
+      typeof item.provider === "string" && item.provider.length <= 80 &&
+      typeof item.online === "boolean" &&
+      (item.error === null || item.error === undefined ||
+        (typeof item.error === "string" && item.error.length <= 200))
+    )) return false;
+  }
+  return true;
+}
+
 function errorResponse(status, message, extraHeaders = {}) {
   return new Response(JSON.stringify({ error: message }), {
     status,
@@ -105,13 +149,7 @@ export async function onRequest(context) {
     }
     // The backend contract is a JSON object with these known status groups.
     // Validate shape before forwarding untrusted upstream content to browsers.
-    if (
-      payload === null ||
-      typeof payload !== "object" ||
-      Array.isArray(payload) ||
-      !["java", "bedrock", "dynmap", "main_site", "minecraft_site", "status_page", "checked"]
-        .every((key) => Object.prototype.hasOwnProperty.call(payload, key))
-    ) {
+    if (!validStatusPayload(payload)) {
       return errorResponse(502, "Status service returned an invalid response");
     }
 
