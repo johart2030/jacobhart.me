@@ -1,295 +1,393 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>jacobhart Server (formerly NotOgSMP)</title>
-
-<style>
-* {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    font-family: Arial, Helvetica, sans-serif;
-    background:
-        linear-gradient(rgba(11, 15, 20, .88), rgba(11, 15, 20, .96)),
-        radial-gradient(circle at top, #26313d, #0b0f14 65%);
-    color: #f5f7fa;
-    min-height: 100vh;
-
-    opacity: 0;
-    transform: translateY(12px);
-    animation: pageOpen .65s ease-out forwards;
-}
-
-@keyframes pageOpen {
-    from {
-        opacity: 0;
-        transform: translateY(12px);
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10140f">
+  <meta name="description" content="Live Java and Bedrock server status, player counts, versions, and connection information for Jacob Hart Minecraft.">
+  <title>Jacob Hart Minecraft — Live Server Status</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b0f0b;
+      --panel: rgba(23, 30, 23, .92);
+      --panel-2: #171e17;
+      --line: #303b2e;
+      --muted: #a3b09e;
+      --text: #f3f7ef;
+      --green: #91e36c;
+      --green-dark: #254c23;
+      --red: #ff7878;
+      --amber: #ffd479;
+      --radius: 18px;
+      --shadow: 0 18px 60px rgba(0, 0, 0, .24);
     }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.container {
-    width: min(1050px, calc(100% - 32px));
-    margin: auto;
-    padding: 55px 0;
-}
-
-header {
-    text-align: center;
-    margin-bottom: 45px;
-}
-
-.logo {
-    font-size: 54px;
-    margin-bottom: 10px;
-    font-weight: 900;
-    letter-spacing: -2px;
-    text-shadow: 0 4px 15px rgba(0,0,0,.5);
-}
-
-.subtitle {
-    color: #8e9aa8;
-    font-size: 18px;
-}
-
-.status-banner {
-    background: rgba(18, 24, 32, .92);
-    border: 1px solid #26313d;
-    border-radius: 14px;
-    padding: 16px 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 25px;
-}
-
-.status-dot {
-    width: 11px;
-    height: 11px;
-    background: #2ed573;
-    border-radius: 50%;
-    box-shadow: 0 0 12px #2ed573;
-}
-
-.status-banner span {
-    color: #f5f7fa;
-    font-weight: bold;
-}
-
-.cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 18px;
-}
-
-.card {
-    background: rgba(18, 24, 32, .92);
-    border: 1px solid #26313d;
-    border-radius: 18px;
-    padding: 28px;
-    transition: transform .2s, border-color .2s;
-}
-
-.card:hover {
-    transform: translateY(-4px);
-    border-color: #3a4755;
-}
-
-.icon {
-    font-size: 38px;
-    margin-bottom: 15px;
-}
-
-.card h2 {
-    margin: 0 0 9px;
-    font-size: 23px;
-}
-
-.card p {
-    color: #8e9aa8;
-    line-height: 1.5;
-    min-height: 45px;
-}
-
-.address {
-    background: #0b1016;
-    border: 1px solid #26313d;
-    border-radius: 9px;
-    padding: 11px;
-    margin: 18px 0;
-    font-family: monospace;
-    color: #aeb8c4;
-    word-break: break-all;
-}
-
-.button {
-    display: block;
-    text-align: center;
-    text-decoration: none;
-    background: #0b1016;
-    color: #f5f7fa;
-    border: 1px solid #26313d;
-    padding: 12px;
-    border-radius: 9px;
-    font-weight: bold;
-    transition: background .2s, border-color .2s, transform .2s;
-}
-
-.button:hover {
-    background: #151d26;
-    border-color: #3a4755;
-    transform: translateY(-1px);
-}
-
-.secondary {
-    background: #0b1016;
-}
-
-.secondary:hover {
-    background: #151d26;
-}
-
-footer {
-    text-align: center;
-    margin-top: 45px;
-    color: #4f5965;
-    font-size: 14px;
-}
-
-@media (max-width: 500px) {
-    .logo {
-        font-size: 40px;
-    }
-
-    .container {
-        padding-top: 35px;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
-        opacity: 1;
-        transform: none;
-        animation: none;
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse at 15% -5%, rgba(104, 171, 65, .18), transparent 42rem),
+        radial-gradient(ellipse at 100% 25%, rgba(59, 101, 47, .12), transparent 35rem),
+        var(--bg);
+      color: var(--text);
+      font: 16px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
-
-    .button {
-        transition: none;
+    a { color: inherit; }
+    button { font: inherit; }
+    button:focus-visible, a:focus-visible { outline: 3px solid var(--green); outline-offset: 3px; }
+    .wrap { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 24px 0; border-bottom: 1px solid rgba(163,176,158,.15); }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; font-weight: 800; letter-spacing: -.035em; }
+    .brand-mark { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid #5b854b; border-radius: 12px; background: linear-gradient(145deg, #294b22, #162416); color: var(--green); font-size: 23px; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
+    .brand-name { font-size: 17px; }
+    .brand-sub { display: block; color: var(--muted); font-size: 12px; font-weight: 500; letter-spacing: .04em; }
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .live-pill, .subtle-pill { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; color: var(--muted); font-size: 12px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+    .live-pill { color: var(--green); background: rgba(77, 125, 48, .13); border-color: rgba(145,227,108,.28); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: 0 0 auto; }
+    .live-pill .dot { box-shadow: 0 0 12px rgba(145,227,108,.8); animation: pulse 1.8s infinite; }
+    @keyframes pulse { 50% { opacity: .45; } }
+    .hero { padding: 56px 0 28px; }
+    .eyebrow { color: var(--green); font-size: 12px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
+    h1 { margin: 12px 0 10px; font-size: clamp(36px, 6vw, 62px); line-height: 1.02; letter-spacing: -.06em; }
+    h1 span { color: var(--green); }
+    .hero-copy { max-width: 670px; color: var(--muted); font-size: 17px; margin: 0; }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+    .overall { display: flex; align-items: center; gap: 15px; margin: 20px 0 24px; padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(110deg, rgba(39, 63, 34, .72), rgba(23, 30, 23, .92) 65%); box-shadow: var(--shadow); }
+    .overall-icon { display: grid; place-items: center; flex: 0 0 44px; height: 44px; border-radius: 13px; background: rgba(145,227,108,.12); color: var(--green); font-size: 22px; }
+    .overall-main { flex: 1; min-width: 0; }
+    .overall-title { font-size: 16px; font-weight: 800; }
+    .overall-detail { margin-top: 2px; color: var(--muted); font-size: 13px; }
+    .overall-status { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; white-space: nowrap; }
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin: 35px 0 15px; }
+    h2 { margin: 0; font-size: 23px; letter-spacing: -.035em; }
+    .section-note { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .servers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .server-card { position: relative; overflow: hidden; min-width: 0; padding: 24px; border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(145deg, rgba(28, 38, 27, .98), rgba(17, 22, 17, .98)); box-shadow: var(--shadow); }
+    .server-card:before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--green); opacity: .8; }
+    .server-card.bedrock:before { background: #78c8ff; }
+    .card-top { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+    .edition { display: flex; align-items: center; gap: 12px; }
+    .edition-icon { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; background: rgba(145,227,108,.12); border: 1px solid rgba(145,227,108,.22); font-size: 25px; }
+    .bedrock .edition-icon { background: rgba(120,200,255,.1); border-color: rgba(120,200,255,.25); }
+    .edition h3 { margin: 0; font-size: 20px; letter-spacing: -.03em; }
+    .edition p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+    .status-tag { display: inline-flex; align-items: center; gap: 7px; padding: 6px 9px; border-radius: 999px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-weight: 850; white-space: nowrap; border: 1px solid rgba(145,227,108,.25); color: var(--green); background: rgba(72, 127, 48, .13); }
+    .status-tag.offline { color: var(--red); border-color: rgba(255,120,120,.25); background: rgba(150,40,40,.13); }
+    .status-tag.unknown { color: var(--amber); border-color: rgba(255,212,121,.25); background: rgba(150,110,20,.13); }
+    .player-block { margin: 26px 0 20px; }
+    .player-label { color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .11em; }
+    .player-count { display: flex; align-items: baseline; gap: 7px; margin-top: 3px; }
+    .player-count strong { font-size: 42px; line-height: 1.15; letter-spacing: -.06em; font-variant-numeric: tabular-nums; }
+    .player-count span { color: var(--muted); font-size: 15px; }
+    .progress { height: 7px; margin-top: 13px; overflow: hidden; background: #30392e; border-radius: 99px; }
+    .progress > span { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #6ac44c, #c0f69f); transition: width .35s ease; }
+    .bedrock .progress > span { background: linear-gradient(90deg, #4aa9ec, #abe0ff); }
+    .stats { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+    .stat { min-width: 0; padding: 12px; border-radius: 12px; background: rgba(4, 8, 4, .35); border: 1px solid rgba(163,176,158,.1); }
+    .stat-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .09em; font-weight: 700; }
+    .stat-value { margin-top: 4px; font-size: 15px; font-weight: 800; overflow-wrap: anywhere; }
+    .address-label { margin: 20px 0 7px; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .address-row { display: flex; align-items: center; gap: 10px; }
+    .address { min-width: 0; flex: 1; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: #0b100b; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; overflow-wrap: anywhere; }
+    .copy-btn, .refresh-btn, .link-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 10px 13px; border-radius: 10px; border: 1px solid #496a3e; background: #294724; color: #f3ffed; font-size: 12px; font-weight: 800; text-decoration: none; cursor: pointer; transition: transform .15s ease, background .15s ease; }
+    .copy-btn:hover, .refresh-btn:hover, .link-btn:hover { background: #34582b; transform: translateY(-1px); }
+    .bedrock .copy-btn { border-color: #3b6b8a; background: #1b3d52; }
+    .bedrock .copy-btn:hover { background: #24516d; }
+    .port-note { margin-top: 8px; color: var(--muted); font-size: 12px; }
+    .services { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+    .service { padding: 16px; min-width: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    .service-top { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; }
+    .service .detail { margin-top: 8px; color: var(--muted); font-size: 12px; }
+    .service .dot { color: var(--green); }
+    .service.offline .dot { color: var(--red); }
+    .service.unknown .dot { color: var(--amber); }
+    .bottom-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 28px 0 0; padding: 15px 0 30px; border-top: 1px solid rgba(163,176,158,.15); }
+    .update-text { color: var(--muted); font-size: 12px; }
+    .update-text strong { color: var(--text); font-weight: 750; }
+    .footer-links { display: flex; flex-wrap: wrap; gap: 14px; color: var(--muted); font-size: 12px; }
+    .footer-links a { text-decoration: none; }
+    .footer-links a:hover { color: var(--green); }
+    .notice { display: none; margin-top: 14px; padding: 13px 15px; color: var(--amber); border: 1px solid rgba(255,212,121,.24); border-radius: 12px; background: rgba(150,110,20,.08); font-size: 13px; }
+    .notice.show { display: block; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media (max-width: 760px) {
+      .hero { padding-top: 40px; }
+      .servers { grid-template-columns: 1fr; }
+      .services { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
-}
-</style>
+    @media (max-width: 520px) {
+      .wrap { width: min(100% - 22px, 1120px); }
+      .topbar { padding: 16px 0; }
+      .brand-mark { width: 38px; height: 38px; }
+      .brand-name { font-size: 14px; }
+      .live-pill { padding: 7px 9px; font-size: 10px; }
+      .hero { padding-top: 35px; }
+      .hero-copy { font-size: 15px; }
+      .overall { align-items: start; padding: 14px; }
+      .overall-status { font-size: 10px; }
+      .server-card { padding: 18px; }
+      .card-top { flex-wrap: wrap; }
+      .player-count strong { font-size: 38px; }
+      .services { gap: 9px; }
+      .service { padding: 13px; }
+      .bottom-row { align-items: start; flex-direction: column; }
+      .address-row { align-items: stretch; }
+      .copy-btn { padding: 10px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
 </head>
-
 <body>
+  <div class="wrap">
+    <nav class="topbar" aria-label="Main navigation">
+      <a class="brand" href="/mc/" aria-label="Jacob Hart Minecraft home">
+        <span class="brand-mark" aria-hidden="true">▦</span>
+        <span class="brand-name">JACOB HART <span class="brand-sub">MINECRAFT NETWORK</span></span>
+      </a>
+      <div class="top-actions">
+        <span class="live-pill" id="live-pill"><span class="dot"></span><span id="live-label">Connecting</span></span>
+      </div>
+    </nav>
 
-<div class="container">
+    <main>
+      <section class="hero">
+        <div class="eyebrow">A world to play together</div>
+        <h1>Your next world<br><span>is waiting.</span></h1>
+        <p class="hero-copy">Join the Jacob Hart Minecraft server on Java or Bedrock. See who's online, check the server version, and copy the connection details right here.</p>
+        <div class="hero-meta">
+          <span class="subtle-pill">Java Edition</span>
+          <span class="subtle-pill">Bedrock Edition</span>
+          <span class="subtle-pill">Live server checks</span>
+        </div>
+      </section>
 
-<header>
-    <div class="logo">Jacob Hart Minecraft</div>
-    <div class="subtitle">A Minecraft server for Java & Bedrock</div>
-</header>
+      <section class="overall" aria-live="polite">
+        <div class="overall-icon" aria-hidden="true">◈</div>
+        <div class="overall-main">
+          <div class="overall-title" id="overall-title">Checking server status…</div>
+          <div class="overall-detail" id="overall-detail">Getting the latest player counts and server details.</div>
+        </div>
+        <div class="overall-status" id="overall-status"><span class="dot"></span><span>Loading</span></div>
+      </section>
+      <div class="notice" id="api-notice" role="status">We couldn't refresh the live data. The page will try again automatically.</div>
 
-<div class="status-banner">
-    <div class="status-dot"></div>
-    <span>Server Status</span>
-    <span style="color:#aeb8c4;">Check the live status</span>
-</div>
-
-<div class="cards">
-
-    <div class="card">
-        <div class="icon">🖥️</div>
-        <h2>Java Edition</h2>
-        <p>Join from Minecraft Java Edition on PC.</p>
-
-        <div class="address">
-            java.jacobhart.me
+      <section aria-labelledby="servers-title">
+        <div class="section-head">
+          <div><h2 id="servers-title">Choose your edition</h2><div class="section-note">Live data from the status API</div></div>
+          <button class="refresh-btn" id="refresh-btn" type="button" title="Refresh server status now">↻ <span>Refresh</span></button>
         </div>
 
-        <a class="button" href="#">
-            Copy Server Address
-        </a>
-    </div>
+        <div class="servers">
+          <article class="server-card java" aria-labelledby="java-title">
+            <div class="card-top">
+              <div class="edition"><div class="edition-icon" aria-hidden="true">▦</div><div><h3 id="java-title">Java Edition</h3><p>PC · Java multiplayer</p></div></div>
+              <span class="status-tag unknown" id="java-status"><span class="dot"></span>Checking</span>
+            </div>
+            <div class="player-block">
+              <div class="player-label">Players online</div>
+              <div class="player-count"><strong id="java-players">—</strong><span id="java-max">/ — players</span></div>
+              <div class="progress" role="progressbar" id="java-progress" aria-label="Java server player capacity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="java-progress-bar"></span></div>
+            </div>
+            <div class="stats">
+              <div class="stat"><div class="stat-label">Server version</div><div class="stat-value" id="java-version">Checking…</div></div>
+              <div class="stat"><div class="stat-label">Ping</div><div class="stat-value" id="java-ping">—</div></div>
+            </div>
+            <div class="address-label">Server address</div>
+            <div class="address-row"><div class="address" id="java-address">java.jacobhart.me</div><button class="copy-btn" type="button" data-copy="java.jacobhart.me" aria-label="Copy Java server address">Copy</button></div>
+          </article>
 
-    <div class="card">
-        <div class="icon">📱</div>
-        <h2>Bedrock Edition</h2>
-        <p>Join from Bedrock Edition on phones, consoles, Windows, and more.</p>
-
-        <div class="address">
-            bedrock.jacobhart.me
+          <article class="server-card bedrock" aria-labelledby="bedrock-title">
+            <div class="card-top">
+              <div class="edition"><div class="edition-icon" aria-hidden="true">◇</div><div><h3 id="bedrock-title">Bedrock Edition</h3><p>Mobile · Console · Windows</p></div></div>
+              <span class="status-tag unknown" id="bedrock-status"><span class="dot"></span>Checking</span>
+            </div>
+            <div class="player-block">
+              <div class="player-label">Players online</div>
+              <div class="player-count"><strong id="bedrock-players">—</strong><span id="bedrock-max">/ — players</span></div>
+              <div class="progress" role="progressbar" id="bedrock-progress" aria-label="Bedrock server player capacity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="bedrock-progress-bar"></span></div>
+            </div>
+            <div class="stats">
+              <div class="stat"><div class="stat-label">Server version</div><div class="stat-value" id="bedrock-version">Checking…</div></div>
+              <div class="stat"><div class="stat-label">Status check</div><div class="stat-value" id="bedrock-ping">—</div></div>
+            </div>
+            <div class="address-label">Server address</div>
+            <div class="address-row"><div class="address" id="bedrock-address">bedrock.jacobhart.me</div><button class="copy-btn" type="button" data-copy="bedrock.jacobhart.me" aria-label="Copy Bedrock server address">Copy</button></div>
+            <div class="port-note">Port: <strong id="bedrock-port">20338</strong> · Enter it in the server settings if requested.</div>
+          </article>
         </div>
+      </section>
 
-        <a class="button" href="#">
-            View Connection Info
-        </a>
-    </div>
-
-    <div class="card">
-        <div class="icon">🗺️</div>
-        <h2>Live Map</h2>
-        <p>Explore the Minecraft world using the live Dynmap.</p>
-
-        <div class="address">
-            map.jacobhart.me
+      <section aria-labelledby="services-title">
+        <div class="section-head"><div><h2 id="services-title">Network services</h2><div class="section-note">Related websites and tools</div></div></div>
+        <div class="services">
+          <div class="service unknown" id="service-dynmap"><div class="service-top"><span class="dot"></span><span>Live map</span></div><div class="detail" id="service-dynmap-detail">Checking…</div></div>
+          <div class="service unknown" id="service-main"><div class="service-top"><span class="dot"></span><span>Main website</span></div><div class="detail" id="service-main-detail">Checking…</div></div>
+          <div class="service unknown" id="service-minecraft"><div class="service-top"><span class="dot"></span><span>Minecraft page</span></div><div class="detail" id="service-minecraft-detail">Checking…</div></div>
+          <div class="service unknown" id="service-status"><div class="service-top"><span class="dot"></span><span>Status page</span></div><div class="detail" id="service-status-detail">Checking…</div></div>
         </div>
+      </section>
+    </main>
 
-        <a class="button" href="https://map.jacobhart.me">
-            Open Live Map
-        </a>
-    </div>
+    <footer class="bottom-row">
+      <div class="update-text">Last checked: <strong id="last-checked">Waiting for API…</strong><br>Auto-refreshes every 30 seconds.</div>
+      <div class="footer-links"><a href="https://map.jacobhart.me" target="_blank" rel="noopener noreferrer">Open map ↗</a><a href="/status/">Full status page ↗</a></div>
+    </footer>
+  </div>
 
-    <div class="card">
-        <div class="icon">📊</div>
-        <h2>Server Status</h2>
-        <p>Check whether the Minecraft servers and services are online.</p>
+  <script>
+    // This is the currently working test Pages API. Change this only after the production API is ready.
+    const API_URL = "https://jacobhart-me-pages-test.pages.dev/api/status";
+    const REFRESH_INTERVAL_MS = 30000;
+    const BEDROCK_PORT = "20338";
+    let refreshInProgress = false;
 
-        <div class="address">
-            status.jacobhart.me
-        </div>
-
-        <a class="button secondary" href="/status/">
-            View Status
-        </a>
-    </div>
-
-</div>
-
-<footer>
-    Jacob Hart Minecraft · jacobhart.me
-</footer>
-
-</div>
-
-<script>
-document.querySelectorAll(".button").forEach(button => {
-    if (button.textContent.includes("Copy")) {
-        button.addEventListener("click", async event => {
-            event.preventDefault();
-
-            try {
-                await navigator.clipboard.writeText("java.jacobhart.me");
-                button.textContent = "Copied!";
-                setTimeout(() => {
-                    button.textContent = "Copy Server Address";
-                }, 1500);
-            } catch {
-                button.textContent = "java.jacobhart.me";
-            }
-        });
+    const $ = (id) => document.getElementById(id);
+    const asNumber = (value) => Number.isFinite(Number(value)) ? Number(value) : null;
+    const displayCount = (value) => {
+      const n = asNumber(value);
+      return n === null ? "—" : Math.max(0, Math.floor(n)).toLocaleString();
+    };
+    const displayVersion = (value) => typeof value === "string" && value.trim() ? value.trim() : "Not reported";
+    const displayMs = (value) => {
+      const n = asNumber(value);
+      return n === null || n < 0 ? "Not available" : `${Math.round(n)} ms`;
+    };
+    function setTag(id, state) {
+      const el = $(id);
+      const safeState = state === true ? "online" : state === false ? "offline" : "unknown";
+      el.className = `status-tag ${safeState}`;
+      const label = safeState === "online" ? "Online" : safeState === "offline" ? "Offline" : "Unknown";
+      el.replaceChildren();
+      const dot = document.createElement("span"); dot.className = "dot";
+      const text = document.createElement("span"); text.textContent = label;
+      el.append(dot, text);
     }
-});
-</script>
-
+    function renderEdition(prefix, record, edition) {
+      const data = record && typeof record === "object" ? record : {};
+      const online = typeof data.online === "boolean" ? data.online : null;
+      const players = asNumber(data.players);
+      const maxPlayers = asNumber(data.max_players);
+      const current = players === null ? "—" : displayCount(players);
+      const max = maxPlayers === null ? "—" : displayCount(maxPlayers);
+      $(`${prefix}-players`).textContent = current;
+      $(`${prefix}-max`).textContent = `/ ${max} players`;
+      $(`${prefix}-version`).textContent = displayVersion(data.version);
+      const percentage = players !== null && maxPlayers !== null && maxPlayers > 0 ? Math.max(0, Math.min(100, players / maxPlayers * 100)) : 0;
+      $(`${prefix}-progress-bar`).style.width = `${percentage}%`;
+      $(`${prefix}-progress`).setAttribute("aria-valuenow", String(Math.round(percentage)));
+      setTag(`${prefix}-status`, online);
+      if (prefix === "java") {
+        $("java-ping").textContent = displayMs(data.ping);
+      } else {
+        // The API's api_response_ms is provider response time, not actual Bedrock network ping.
+        $("bedrock-ping").textContent = data.ping === null || data.ping === undefined ? `API ${displayMs(data.api_response_ms)}` : displayMs(data.ping);
+      }
+      return { online, players: players === null ? 0 : Math.max(0, players), maxPlayers: maxPlayers === null ? 0 : Math.max(0, maxPlayers) };
+    }
+    function renderService(key, record) {
+      const data = record && typeof record === "object" ? record : {};
+      const online = typeof data.online === "boolean" ? data.online : null;
+      const el = $(`service-${key}`);
+      el.className = `service ${online === true ? "" : online === false ? "offline" : "unknown"}`.trim();
+      const detail = $( `service-${key}-detail` );
+      if (online === true) {
+        const code = asNumber(data.http_status);
+        detail.textContent = code === null ? "Responding" : `Responding · HTTP ${Math.round(code)}`;
+      } else if (online === false) {
+        const code = asNumber(data.http_status);
+        detail.textContent = code === null ? "Not responding" : `Not responding · HTTP ${Math.round(code)}`;
+      } else {
+        detail.textContent = data.configured === false ? "Not configured" : "No data";
+      }
+    }
+    function setOverall(java, bedrock) {
+      const states = [java.online, bedrock.online];
+      let title, detail, state;
+      if (states.every(value => value === true)) {
+        title = "Both editions are online"; detail = "Java and Bedrock are responding to status checks."; state = "online";
+      } else if (states.every(value => value === false)) {
+        title = "Both editions appear offline"; detail = "The status API cannot reach either Minecraft edition."; state = "offline";
+      } else if (states.some(value => value === true)) {
+        title = "Some servers are online"; detail = "At least one edition is responding; check the individual cards."; state = "partial";
+      } else {
+        title = "Server status is unknown"; detail = "The API didn't return a usable status for the editions."; state = "unknown";
+      }
+      $("overall-title").textContent = title;
+      $("overall-detail").textContent = detail;
+      const status = $("overall-status"); status.replaceChildren();
+      const dot = document.createElement("span"); dot.className = "dot";
+      const label = document.createElement("span"); label.textContent = state === "online" ? "All systems go" : state === "offline" ? "Offline" : state === "partial" ? "Partial outage" : "Unknown";
+      status.append(dot, label);
+      status.style.color = state === "online" ? "var(--green)" : state === "offline" ? "var(--red)" : "var(--amber)";
+      $("live-label").textContent = state === "online" ? "Live" : state === "partial" ? "Partial" : state === "offline" ? "Offline" : "Unknown";
+      $("live-pill").style.color = state === "online" ? "var(--green)" : state === "offline" ? "var(--red)" : "var(--amber)";
+    }
+    async function refreshStatus() {
+      if (refreshInProgress) return;
+      refreshInProgress = true;
+      $("refresh-btn").disabled = true;
+      const originalButton = $("refresh-btn").innerHTML;
+      $("refresh-btn").innerHTML = "↻ <span>Refreshing…</span>";
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 9000);
+      try {
+        const response = await fetch(API_URL, { method: "GET", headers: { "Accept": "application/json" }, cache: "no-store", signal: controller.signal });
+        if (!response.ok) throw new Error(`Status API returned HTTP ${response.status}`);
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.toLowerCase().includes("application/json")) throw new Error("Status API did not return JSON");
+        const data = await response.json();
+        if (!data || typeof data !== "object" || !data.java || !data.bedrock) throw new Error("Status API response was missing server data");
+        const java = renderEdition("java", data.java, "java");
+        const bedrock = renderEdition("bedrock", data.bedrock, "bedrock");
+        setOverall(java, bedrock);
+        renderService("dynmap", data.dynmap);
+        renderService("main", data.main_site);
+        renderService("minecraft", data.minecraft_site);
+        renderService("status", data.status_page);
+        const checked = asNumber(data.checked);
+        $("last-checked").textContent = checked !== null ? new Date(checked * 1000).toLocaleString() : new Date().toLocaleString();
+        $("api-notice").classList.remove("show");
+      } catch (error) {
+        $("api-notice").classList.add("show");
+        $("live-label").textContent = "API unavailable";
+        $("overall-title").textContent = "Couldn't refresh server status";
+        $("overall-detail").textContent = "Showing the last successful data, if available. Retrying automatically.";
+        $("last-checked").textContent = "Refresh failed · " + new Date().toLocaleTimeString();
+        console.warn("Status refresh failed:", error);
+      } finally {
+        clearTimeout(timeout);
+        refreshInProgress = false;
+        $("refresh-btn").disabled = false;
+        $("refresh-btn").innerHTML = originalButton;
+      }
+    }
+    document.querySelectorAll("[data-copy]").forEach(button => {
+      button.addEventListener("click", async () => {
+        const address = button.getAttribute("data-copy");
+        const previous = button.textContent;
+        try {
+          await navigator.clipboard.writeText(address);
+          button.textContent = "Copied!";
+        } catch {
+          const temp = document.createElement("textarea");
+          temp.value = address; temp.setAttribute("readonly", "");
+          temp.style.position = "fixed"; temp.style.opacity = "0";
+          document.body.appendChild(temp); temp.select();
+          const copied = document.execCommand("copy"); temp.remove();
+          button.textContent = copied ? "Copied!" : "Copy manually";
+        }
+        setTimeout(() => { button.textContent = previous; }, 1600);
+      });
+    });
+    $("refresh-btn").addEventListener("click", refreshStatus);
+    $("bedrock-port").textContent = BEDROCK_PORT;
+    refreshStatus();
+    setInterval(refreshStatus, REFRESH_INTERVAL_MS);
+  </script>
 </body>
 </html>
