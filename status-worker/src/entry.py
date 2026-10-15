@@ -5,6 +5,7 @@ import time
 from js import Object, fetch
 from pyodide.ffi import to_js
 from workers import WorkerEntrypoint, Response
+from urllib.parse import urlparse
 
 
 PUBLIC_MAIN_SITE = "https://jacobhart.me/"
@@ -63,7 +64,7 @@ async def check_website(url):
         return {
             "online": False,
             "ping": elapsed,
-            "error": str(error),
+            "error": "Website check failed",
         }
 
 
@@ -80,10 +81,7 @@ async def check_minecraft(api_url):
             status = int(response.status)
             body = await response.text()
 
-            raise RuntimeError(
-                f"Status API returned HTTP {status}: "
-                f"{body[:200]}"
-            )
+            raise RuntimeError("Minecraft status provider returned an error")
 
         # Read the response as text and parse it into a
         # regular Python dictionary.
@@ -128,7 +126,7 @@ async def check_minecraft(api_url):
             "api_response_ms": round(
                 (time.perf_counter() - start) * 1000
             ),
-            "error": str(error),
+            "error": "Minecraft status check failed",
         }
 
 
@@ -144,8 +142,26 @@ def add_headers(response):
 class Default(WorkerEntrypoint):
 
     async def fetch(self, request):
+        # Handle browser preflight requests separately.
         if request.method == "OPTIONS":
-            return add_headers(Response(""))
+            response = Response("")
+            response.status = 204
+            return add_headers(response)
+
+        # This endpoint is read-only and serves one route.
+        if request.method != "GET":
+            response = Response.json(
+                {"error": "Method not allowed"}
+            )
+            response.status = 405
+            response.headers["Allow"] = "GET, OPTIONS"
+            return add_headers(response)
+
+        path = urlparse(request.url).path
+        if path != "/api/status":
+            response = Response.json({"error": "Not found"})
+            response.status = 404
+            return add_headers(response)
 
         (
             java,
